@@ -1,8 +1,15 @@
 import { Request, Response } from 'express';
 import { ClienteService } from '../../domain/services/ClienteService';
+import { PrismaClient } from '@prisma/client';
+import { PrismaClienteRepository } from '../persistence/PrismaClienteRepository';
 
 export class ClienteController {
-  constructor(private clienteService: ClienteService) {}
+  private clienteService: ClienteService;
+
+  constructor(prisma: PrismaClient) {
+    const clienteRepository = new PrismaClienteRepository(prisma);
+    this.clienteService = new ClienteService(clienteRepository);
+  }
 
   async crearCliente(req: Request, res: Response) {
     try {

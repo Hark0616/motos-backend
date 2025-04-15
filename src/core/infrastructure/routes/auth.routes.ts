@@ -3,9 +3,9 @@ import { AuthController } from '../controllers/AuthController';
 import { AuthMiddleware } from '../middleware/auth.middleware';
 import { PrismaClient } from '@prisma/client';
 
-export function createAuthRoutes(prisma: PrismaClient) {
+export function createAuthRoutes(authController: AuthController) {
   const router = Router();
-  const authController = new AuthController(prisma);
+  const prisma = new PrismaClient();
   const authMiddleware = new AuthMiddleware(prisma);
 
   // Rutas públicas

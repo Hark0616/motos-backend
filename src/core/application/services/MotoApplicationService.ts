@@ -5,29 +5,35 @@ import { CrearMotoDTO } from '../dtos/CrearMotoDTO';
 export class MotoApplicationService {
   constructor(private motoService: MotoService) {}
 
-  async crearMoto(dto: CrearMotoDTO): Promise<Moto> {
-    const moto = new Moto({
-      ...dto,
-      estado: EstadoMoto.EN_EVALUACION,
-      fechaCompra: new Date(),
-    });
-
-    return this.motoService.crearMoto(moto);
+  async crearMoto(data: any) {
+    return this.motoService.crearMoto(data);
   }
 
-  async actualizarMoto(id: string, dto: Partial<CrearMotoDTO>): Promise<Moto> {
-    return this.motoService.actualizarMoto(id, dto);
+  async actualizarMoto(id: number, data: any) {
+    return this.motoService.actualizarMoto(id, data);
   }
 
-  async cambiarEstado(id: string, estado: EstadoMoto): Promise<Moto> {
+  async obtenerMoto(id: number) {
+    return this.motoService.obtenerMoto(id);
+  }
+
+  async obtenerTodas() {
+    return this.motoService.obtenerTodas();
+  }
+
+  async obtenerPorEstado(estado: string) {
+    return this.motoService.obtenerPorEstado(estado);
+  }
+
+  async cambiarEstado(id: number, estado: string) {
     return this.motoService.cambiarEstado(id, estado);
   }
 
-  async agregarReparacion(id: string, descripcion: string, costo: number): Promise<Moto> {
-    return this.motoService.agregarReparacion(id, descripcion, costo);
+  async agregarReparacion(id: number, reparacion: any) {
+    return this.motoService.agregarReparacion(id, reparacion);
   }
 
-  async calcularPrecioSugerido(id: string): Promise<number> {
+  async calcularPrecioSugerido(id: number) {
     return this.motoService.calcularPrecioSugerido(id);
   }
 } 

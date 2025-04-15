@@ -1,15 +1,11 @@
 import { Router } from 'express';
 import { VentaController } from '../controllers/VentaController';
-import { VentaService } from '../../domain/services/VentaService';
-import { PrismaVentaRepository } from '../persistence/PrismaVentaRepository';
 import { PrismaClient } from '@prisma/client';
 import { AuthMiddleware } from '../middleware/auth.middleware';
 
-export const createVentaRoutes = (prisma: PrismaClient) => {
+export const createVentaRoutes = (ventaController: VentaController) => {
   const router = Router();
-  const ventaRepository = new PrismaVentaRepository(prisma);
-  const ventaService = new VentaService(ventaRepository);
-  const ventaController = new VentaController(ventaService);
+  const prisma = new PrismaClient();
   const authMiddleware = new AuthMiddleware(prisma);
 
   // Rutas protegidas que requieren autenticación

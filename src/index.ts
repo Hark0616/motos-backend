@@ -9,6 +9,14 @@ import { createMotoRoutes } from './core/infrastructure/routes/moto.routes';
 import { createAuthRoutes } from './core/infrastructure/routes/auth.routes';
 import { createClienteRoutes } from './core/infrastructure/routes/cliente.routes';
 import { createVentaRoutes } from './core/infrastructure/routes/venta.routes';
+import { AuthService } from './core/domain/services/AuthService';
+import { ClienteService } from './core/domain/services/ClienteService';
+import { VentaService } from './core/domain/services/VentaService';
+import { AuthController } from './core/infrastructure/controllers/AuthController';
+import { ClienteController } from './core/infrastructure/controllers/ClienteController';
+import { VentaController } from './core/infrastructure/controllers/VentaController';
+import { PrismaClienteRepository } from './core/infrastructure/persistence/PrismaClienteRepository';
+import { PrismaVentaRepository } from './core/infrastructure/persistence/PrismaVentaRepository';
 import dotenv from 'dotenv';
 
 // Cargar variables de entorno
@@ -92,17 +100,29 @@ class PrismaMotoRepository implements IMotoRepository {
 app.use(cors());
 app.use(express.json());
 
-// Inicialización de servicios
+// Inicialización de repositorios
 const motoRepository = new PrismaMotoRepository();
-const motoService = new MotoService(motoRepository);
+const clienteRepository = new PrismaClienteRepository(prisma);
+const ventaRepository = new PrismaVentaRepository(prisma);
+
+// Inicialización de servicios
+const motoService = new MotoService(prisma);
 const motoApplicationService = new MotoApplicationService(motoService);
+const authService = new AuthService(prisma);
+const clienteService = new ClienteService(clienteRepository);
+const ventaService = new VentaService(ventaRepository);
+
+// Inicialización de controladores
 const motoController = new MotoController(motoApplicationService);
+const authController = new AuthController(prisma);
+const clienteController = new ClienteController(prisma);
+const ventaController = new VentaController(prisma);
 
 // Rutas
-app.use('/api/auth', createAuthRoutes(prisma));
+app.use('/api/auth', createAuthRoutes(authController));
 app.use('/api/motos', createMotoRoutes(motoController));
-app.use('/api/clientes', createClienteRoutes(prisma));
-app.use('/api/ventas', createVentaRoutes(prisma));
+app.use('/api/clientes', createClienteRoutes(clienteController));
+app.use('/api/ventas', createVentaRoutes(ventaController));
 
 // Ruta de prueba
 app.get('/', (req, res) => {

@@ -1,139 +1,70 @@
-import { IMotoRepository } from '../repositories/IMotoRepository';
+import { PrismaClient } from '@prisma/client';
 
 export class MotoService {
-  constructor(private motoRepository: IMotoRepository) {}
+  constructor(private prisma: PrismaClient) {}
 
-  async crearMoto(data: {
-    marca: string;
-    modelo: string;
-    año: number;
-    kilometraje: number;
-    estado: string;
-    precioCompra: number;
-    precioVenta?: number;
-    descripcion?: string;
-    fotos?: string[];
-    documentos?: {
-      matricula?: string;
-      soat?: string;
-      revisionTecnica?: string;
-    };
-    reparaciones?: {
-      descripcion: string;
-      costo: number;
-      fecha: Date;
-    }[];
-  }) {
-    // Validar que el estado inicial sea EN_EVALUACION
-    if (data.estado !== "EN_EVALUACION") {
-      throw new Error("El estado inicial debe ser EN_EVALUACION");
-    }
-
-    // Validar que no se incluya precioVenta en la creación
-    if (data.precioVenta) {
-      throw new Error("No se puede establecer el precio de venta al crear la moto");
-    }
-
-    return this.motoRepository.create(data);
+  async crearMoto(data: any) {
+    return this.prisma.moto.create({
+      data
+    });
   }
 
-  async actualizarMoto(id: number, data: Partial<{
-    marca: string;
-    modelo: string;
-    año: number;
-    kilometraje: number;
-    estado: string;
-    precioCompra: number;
-    precioVenta: number;
-    descripcion: string;
-    fotos: string[];
-    documentos: {
-      matricula?: string;
-      soat?: string;
-      revisionTecnica?: string;
-    };
-    reparaciones: {
-      descripcion: string;
-      costo: number;
-      fecha: Date;
-    }[];
-  }>) {
-    const moto = await this.motoRepository.findById(id);
-    if (!moto) {
-      throw new Error("Moto no encontrada");
-    }
-
-    // Validar transiciones de estado
-    if (data.estado) {
-      this.validarTransicionEstado(moto.estado, data.estado);
-    }
-
-    return this.motoRepository.update(id, data);
+  async actualizarMoto(id: number, data: any) {
+    return this.prisma.moto.update({
+      where: { id },
+      data
+    });
   }
 
   async obtenerMoto(id: number) {
-    const moto = await this.motoRepository.findById(id);
-    if (!moto) {
-      throw new Error("Moto no encontrada");
-    }
-    return moto;
+    return this.prisma.moto.findUnique({
+      where: { id }
+    });
   }
 
-  async listarMotos() {
-    return this.motoRepository.findAll();
+  async obtenerTodas() {
+    return this.prisma.moto.findMany();
   }
 
-  async listarMotosPorEstado(estado: string) {
-    return this.motoRepository.findByEstado(estado);
+  async obtenerPorEstado(estado: string) {
+    return this.prisma.moto.findMany({
+      where: { estado }
+    });
   }
 
-  async listarMotosPorMarca(marca: string) {
-    return this.motoRepository.findByMarca(marca);
+  async cambiarEstado(id: number, estado: string) {
+    return this.prisma.moto.update({
+      where: { id },
+      data: { estado }
+    });
   }
 
-  async listarMotosPorPrecio(min: number, max: number) {
-    return this.motoRepository.findByPrecioRange(min, max);
+  async agregarReparacion(id: number, reparacion: any) {
+    const moto = await this.obtenerMoto(id);
+    if (!moto) throw new Error('Moto no encontrada');
+
+    const reparaciones = moto.reparaciones ? JSON.parse(moto.reparaciones as string) : [];
+    reparaciones.push(reparacion);
+
+    return this.prisma.moto.update({
+      where: { id },
+      data: { reparaciones: JSON.stringify(reparaciones) }
+    });
   }
 
-  async agregarReparacion(motoId: number, reparacion: {
-    descripcion: string;
-    costo: number;
-    fecha: Date;
-  }) {
-    const moto = await this.motoRepository.findById(motoId);
-    if (!moto) {
-      throw new Error("Moto no encontrada");
-    }
+  async calcularPrecioSugerido(id: number) {
+    const moto = await this.obtenerMoto(id);
+    if (!moto) throw new Error('Moto no encontrada');
 
-    // Validar que la moto esté en estado EN_REPARACION
-    if (moto.estado !== "EN_REPARACION") {
-      throw new Error("Solo se pueden agregar reparaciones a motos en estado EN_REPARACION");
-    }
+    // Lógica para calcular el precio sugerido
+    const precioBase = moto.precioCompra;
+    const gastos = await this.prisma.gasto.findMany({
+      where: { motoId: id }
+    });
 
-    return this.motoRepository.addReparacion(motoId, reparacion);
-  }
+    const totalGastos = gastos.reduce((sum, gasto) => sum + gasto.monto, 0);
+    const margenGanancia = 0.2; // 20% de margen de ganancia
 
-  async cambiarEstado(motoId: number, nuevoEstado: string) {
-    const moto = await this.motoRepository.findById(motoId);
-    if (!moto) {
-      throw new Error("Moto no encontrada");
-    }
-
-    this.validarTransicionEstado(moto.estado, nuevoEstado);
-    return this.motoRepository.updateEstado(motoId, nuevoEstado);
-  }
-
-  private validarTransicionEstado(estadoActual: string, nuevoEstado: string) {
-    const transicionesValidas: { [key: string]: string[] } = {
-      "EN_EVALUACION": ["EN_REPARACION", "DISPONIBLE"],
-      "EN_REPARACION": ["DISPONIBLE"],
-      "DISPONIBLE": ["RESERVADA", "VENDIDA"],
-      "RESERVADA": ["DISPONIBLE", "VENDIDA"],
-      "VENDIDA": []
-    };
-
-    if (!transicionesValidas[estadoActual]?.includes(nuevoEstado)) {
-      throw new Error(`Transición de estado inválida: de ${estadoActual} a ${nuevoEstado}`);
-    }
+    return precioBase + totalGastos + (precioBase + totalGastos) * margenGanancia;
   }
 } 

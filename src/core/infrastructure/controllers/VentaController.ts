@@ -1,8 +1,15 @@
 import { Request, Response } from 'express';
 import { VentaService } from '../../domain/services/VentaService';
+import { PrismaClient } from '@prisma/client';
+import { PrismaVentaRepository } from '../persistence/PrismaVentaRepository';
 
 export class VentaController {
-  constructor(private ventaService: VentaService) {}
+  private ventaService: VentaService;
+
+  constructor(prisma: PrismaClient) {
+    const ventaRepository = new PrismaVentaRepository(prisma);
+    this.ventaService = new VentaService(ventaRepository);
+  }
 
   async crearVenta(req: Request, res: Response) {
     try {

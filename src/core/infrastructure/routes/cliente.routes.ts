@@ -1,15 +1,11 @@
 import { Router } from 'express';
 import { ClienteController } from '../controllers/ClienteController';
-import { ClienteService } from '../../domain/services/ClienteService';
-import { PrismaClienteRepository } from '../persistence/PrismaClienteRepository';
 import { PrismaClient } from '@prisma/client';
 import { AuthMiddleware } from '../middleware/auth.middleware';
 
-export function createClienteRoutes(prisma: PrismaClient) {
+export function createClienteRoutes(clienteController: ClienteController) {
   const router = Router();
-  const clienteRepository = new PrismaClienteRepository(prisma);
-  const clienteService = new ClienteService(clienteRepository);
-  const clienteController = new ClienteController(clienteService);
+  const prisma = new PrismaClient();
   const authMiddleware = new AuthMiddleware(prisma);
 
   // Middleware de autenticación para todas las rutas

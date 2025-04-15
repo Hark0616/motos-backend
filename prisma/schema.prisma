@@ -31,14 +31,17 @@ model Moto {
 }
 
 model Cliente {
-  id            Int      @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   nombre        String
-  cedula        String   @unique
-  telefono      String?
-  correo        String?
-  rol           String
+  cedula        String    @unique
+  telefono      String
+  apellido      String
+  createdAt     DateTime? @default(now())
+  direccion     String
+  email         String    @unique
+  updatedAt     DateTime  @default(now()) @updatedAt
   compras       Compra[]
-  motosActuales Moto[]   @relation("ClienteActualMotos")
+  motosActuales Moto[]    @relation("ClienteActualMotos")
   ventas        Venta[]
 }
 
