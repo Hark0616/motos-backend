@@ -1,0 +1,15 @@
+-- AlterTable
+ALTER TABLE "Compra" ALTER COLUMN "fecha" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "Gasto" ALTER COLUMN "fecha" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "Moto" ADD COLUMN     "descripcion" TEXT,
+ADD COLUMN     "documentos" JSONB,
+ADD COLUMN     "fotos" TEXT[],
+ADD COLUMN     "reparaciones" JSONB,
+ALTER COLUMN "fechaCompra" SET DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "Venta" ALTER COLUMN "fecha" SET DEFAULT CURRENT_TIMESTAMP;
