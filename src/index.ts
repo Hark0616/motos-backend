@@ -6,6 +6,13 @@ import { MotoApplicationService } from './core/application/services/MotoApplicat
 import { MotoService } from './core/domain/services/MotoService';
 import { IMotoRepository } from './core/domain/repositories/IMotoRepository';
 import { createMotoRoutes } from './core/infrastructure/routes/moto.routes';
+import { createAuthRoutes } from './core/infrastructure/routes/auth.routes';
+import { createClienteRoutes } from './core/infrastructure/routes/cliente.routes';
+import { createVentaRoutes } from './core/infrastructure/routes/venta.routes';
+import dotenv from 'dotenv';
+
+// Cargar variables de entorno
+dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
@@ -16,22 +23,22 @@ class PrismaMotoRepository implements IMotoRepository {
     return prisma.moto.create({ data: moto });
   }
 
-  async update(id: string, moto: any): Promise<any> {
+  async update(id: number, moto: any): Promise<any> {
     return prisma.moto.update({
-      where: { id: parseInt(id) },
+      where: { id },
       data: moto,
     });
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: number): Promise<void> {
     await prisma.moto.delete({
-      where: { id: parseInt(id) },
+      where: { id },
     });
   }
 
-  async findById(id: string): Promise<any> {
+  async findById(id: number): Promise<any> {
     return prisma.moto.findUnique({
-      where: { id: parseInt(id) },
+      where: { id },
     });
   }
 
@@ -45,10 +52,39 @@ class PrismaMotoRepository implements IMotoRepository {
     });
   }
 
-  async findByCliente(clienteId: string): Promise<any[]> {
+  async findByMarca(marca: string): Promise<any[]> {
     return prisma.moto.findMany({
-      where: { clienteActualId: parseInt(clienteId) },
+      where: { marca },
     });
+  }
+
+  async findByPrecioRange(min: number, max: number): Promise<any[]> {
+    return prisma.moto.findMany({
+      where: {
+        precioVenta: {
+          gte: min,
+          lte: max
+        }
+      }
+    });
+  }
+
+  async addReparacion(motoId: number, reparacion: {
+    descripcion: string;
+    costo: number;
+    fecha: Date;
+  }): Promise<any> {
+    const moto = await this.findById(motoId);
+    if (!moto) throw new Error('Moto no encontrada');
+
+    const reparaciones = moto.reparaciones ? JSON.parse(moto.reparaciones as string) : [];
+    reparaciones.push(reparacion);
+
+    return this.update(motoId, { reparaciones: JSON.stringify(reparaciones) });
+  }
+
+  async updateEstado(motoId: number, estado: string): Promise<any> {
+    return this.update(motoId, { estado });
   }
 }
 
@@ -63,14 +99,17 @@ const motoApplicationService = new MotoApplicationService(motoService);
 const motoController = new MotoController(motoApplicationService);
 
 // Rutas
+app.use('/api/auth', createAuthRoutes(prisma));
 app.use('/api/motos', createMotoRoutes(motoController));
+app.use('/api/clientes', createClienteRoutes(prisma));
+app.use('/api/ventas', createVentaRoutes(prisma));
 
 // Ruta de prueba
 app.get('/', (req, res) => {
   res.send('¡Backend de compraventa de motos funcionando! 🏍️');
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
 });

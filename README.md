@@ -1,131 +1,141 @@
 # Sistema de Gestión de Motos - Backend
 
-Backend para el sistema de gestión de compra/venta de motos.
+## Descripción
+Sistema backend para la gestión de venta y compra de motos, incluyendo control de gastos, comisiones y clientes.
 
-## Requisitos Previos
-
-- Node.js >= 18.0.0
-- Cuenta en Supabase (https://supabase.com)
-
-## Instalación
-
-1. Clonar el repositorio:
-```bash
-git clone https://github.com/tu-usuario/motos-backend.git
-cd motos-backend
-```
-
-2. Instalar dependencias:
-```bash
-npm install
-```
-
-3. Configurar variables de entorno:
-```bash
-cp .env.example .env
-```
-
-Editar el archivo `.env` con tus credenciales de Supabase:
-- Ve a tu proyecto en Supabase (https://app.supabase.com)
-- En la sección "Project Settings" > "Database" encontrarás la URL de conexión
-- En "Project Settings" > "API" encontrarás:
-  - Project URL (SUPABASE_URL)
-  - anon/public key (SUPABASE_ANON_KEY)
-  - service_role key (SUPABASE_SERVICE_ROLE_KEY)
-
-4. Configurar la base de datos:
-```bash
-# Generar cliente de Prisma
-npm run prisma:generate
-
-# Ejecutar migraciones
-npm run prisma:migrate
-```
-
-## Configuración de Supabase
-
-1. Crear un nuevo proyecto en Supabase:
-   - Ve a https://supabase.com
-   - Crea una cuenta o inicia sesión
-   - Crea un nuevo proyecto
-   - Espera a que se complete la configuración
-
-2. Obtener las credenciales:
-   - Project URL: Se encuentra en Project Settings > API
-   - Database Password: Se establece al crear el proyecto
-   - API Keys: Se encuentran en Project Settings > API
-
-3. Configurar la base de datos:
-   - Las migraciones de Prisma se ejecutarán automáticamente
-   - Verifica que las tablas se hayan creado correctamente
-
-## Desarrollo
-
-Para iniciar el servidor en modo desarrollo:
-```bash
-npm run dev
-```
-
-El servidor estará disponible en `http://localhost:3000`
-
-## Producción
-
-Para construir y ejecutar en producción:
-```bash
-# Construir la aplicación
-npm run build
-
-# Iniciar el servidor
-npm start
-```
-
-## API Endpoints
-
-### Gastos
-
-- `POST /api/gastos` - Crear un nuevo gasto
-  ```json
-  {
-    "tipo": "MECANICO",
-    "descripcion": "Cambio de aceite",
-    "monto": 150.00,
-    "motoId": 1,
-    "comprobante": "https://ejemplo.com/comprobante.jpg",
-    "notas": "Cambio de aceite y filtro"
-  }
-  ```
-
-- `PUT /api/gastos/:id` - Actualizar un gasto existente
-- `PATCH /api/gastos/:id/pagar` - Marcar un gasto como pagado
-- `GET /api/gastos/moto/:motoId` - Obtener gastos por moto
-- `GET /api/gastos/tipo/:tipo` - Obtener gastos por tipo
-- `GET /api/gastos/pendientes` - Obtener gastos pendientes
+## Características Principales
+- Gestión de motos (compra, venta, estado)
+- Control de gastos y comisiones
+- Gestión de clientes
+- Sistema de autenticación y autorización
+- Generación de reportes y cálculos de ganancias
+- API RESTful con Express y TypeScript
+- Base de datos PostgreSQL con Prisma ORM
 
 ## Estructura del Proyecto
-
 ```
 backend/
+├── prisma/                 # Configuración de Prisma y esquema de base de datos
 ├── src/
 │   ├── core/
-│   │   ├── domain/
-│   │   │   ├── entities/
-│   │   │   ├── repositories/
-│   │   │   └── services/
-│   │   └── infrastructure/
-│   │       ├── controllers/
-│   │       ├── dto/
-│   │       ├── persistence/
-│   │       └── routes/
-│   ├── prisma/
-│   │   └── schema.prisma
-│   └── app.ts
-├── .env.example
-├── package.json
-└── README.md
+│   │   ├── domain/         # Lógica de negocio
+│   │   │   ├── entities/   # Entidades del dominio
+│   │   │   ├── repositories/ # Interfaces de repositorios
+│   │   │   └── services/   # Servicios de negocio
+│   │   └── infrastructure/ # Implementación de infraestructura
+│   │       ├── controllers/ # Controladores de la API
+│   │       ├── middleware/  # Middleware de autenticación y otros
+│   │       ├── persistence/ # Implementación de repositorios
+│   │       └── routes/     # Definición de rutas
+│   └── index.ts           # Punto de entrada de la aplicación
+├── .env                   # Variables de entorno (no versionado)
+├── .env.example          # Ejemplo de variables de entorno
+├── package.json          # Dependencias y scripts
+└── tsconfig.json         # Configuración de TypeScript
 ```
 
-## Contribución
+## Requisitos Previos
+- Node.js (v16 o superior)
+- PostgreSQL
+- npm o yarn
 
+## Instalación
+1. Clonar el repositorio
+2. Instalar dependencias:
+   ```bash
+   npm install
+   ```
+3. Copiar el archivo de variables de entorno:
+   ```bash
+   cp .env.example .env
+   ```
+4. Configurar las variables de entorno en `.env`
+5. Inicializar la base de datos:
+   ```bash
+   npx prisma migrate dev
+   ```
+
+## Configuración de la Base de Datos
+El proyecto utiliza PostgreSQL como base de datos. Asegúrate de tener:
+1. Una instancia de PostgreSQL en ejecución
+2. Las credenciales correctas en el archivo `.env`
+3. La base de datos creada y accesible
+
+## Variables de Entorno
+```
+DATABASE_URL="postgresql://usuario:contraseña@localhost:5432/nombre_bd"
+JWT_SECRET="tu-secreto-jwt"
+PORT=3000
+```
+
+## Endpoints Principales
+
+### Autenticación
+- `POST /api/auth/login` - Iniciar sesión
+- `POST /api/auth/usuarios` - Crear usuario (solo ADMIN)
+- `PUT /api/auth/usuarios/password` - Cambiar contraseña
+- `PUT /api/auth/usuarios/:usuarioId/desactivar` - Desactivar usuario (solo ADMIN)
+
+### Motos
+- `GET /api/motos` - Listar todas las motos
+- `GET /api/motos/:id` - Obtener moto por ID
+- `POST /api/motos` - Crear nueva moto
+- `PUT /api/motos/:id` - Actualizar moto
+- `GET /api/motos/estado/:estado` - Filtrar por estado
+- `GET /api/motos/marca/:marca` - Filtrar por marca
+
+### Ventas
+- `POST /api/ventas` - Crear nueva venta
+- `GET /api/ventas/:id` - Obtener venta por ID
+- `GET /api/ventas` - Listar todas las ventas
+- `GET /api/ventas/cliente/:clienteId` - Obtener ventas por cliente
+- `GET /api/ventas/moto/:motoId` - Obtener ventas por moto
+- `GET /api/ventas/fecha` - Filtrar ventas por rango de fechas
+- `PUT /api/ventas/:id/traspaso` - Actualizar estado de traspaso
+- `GET /api/ventas/reportes/ganancias` - Calcular ganancias (solo ADMIN)
+- `GET /api/ventas/reportes/general` - Generar reporte general (solo ADMIN)
+- `GET /api/ventas/:id/comisiones` - Obtener comisiones por venta
+
+### Gastos
+- `POST /api/gastos` - Crear nuevo gasto
+- `GET /api/gastos` - Listar todos los gastos
+- `GET /api/gastos/:id` - Obtener gasto por ID
+- `PUT /api/gastos/:id` - Actualizar gasto
+- `PUT /api/gastos/:id/pagar` - Marcar gasto como pagado
+- `GET /api/gastos/moto/:motoId` - Obtener gastos por moto
+- `GET /api/gastos/tipo/:tipo` - Filtrar por tipo de gasto
+- `GET /api/gastos/pendientes` - Obtener gastos pendientes
+
+## Roles de Usuario
+- ADMIN: Acceso total al sistema
+- VENDEDOR: Puede gestionar ventas y clientes
+- MECANICO: Puede gestionar reparaciones y mantenimiento
+
+## Desarrollo
+1. Iniciar el servidor en modo desarrollo:
+   ```bash
+   npm run dev
+   ```
+2. Ejecutar pruebas:
+   ```bash
+   npm test
+   ```
+3. Generar documentación:
+   ```bash
+   npm run docs
+   ```
+
+## Despliegue
+1. Construir la aplicación:
+   ```bash
+   npm run build
+   ```
+2. Iniciar en producción:
+   ```bash
+   npm start
+   ```
+
+## Contribución
 1. Fork el proyecto
 2. Crear una rama para tu feature (`git checkout -b feature/AmazingFeature`)
 3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
@@ -133,5 +143,4 @@ backend/
 5. Abrir un Pull Request
 
 ## Licencia
-
-Este proyecto está bajo la Licencia MIT. 
+Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles. 

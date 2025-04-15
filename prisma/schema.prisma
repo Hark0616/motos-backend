@@ -7,6 +7,91 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Moto {
+  id              Int        @id @default(autoincrement())
+  marca           String
+  modelo          String
+  año            Int
+  kilometraje     Int
+  estado          String
+  precioCompra    Float
+  precioVenta     Float?
+  fechaCompra     DateTime   @default(now())
+  fechaVenta      DateTime?
+  clienteActualId Int?
+  descripcion     String?
+  documentos      Json?
+  fotos           String[]
+  reparaciones    Json?
+  comisiones      Comision[]
+  compras         Compra[]
+  gastos          Gasto[]
+  clienteActual   Cliente?   @relation("ClienteActualMotos", fields: [clienteActualId], references: [id])
+  ventas          Venta[]
+}
+
+model Cliente {
+  id            Int      @id @default(autoincrement())
+  nombre        String
+  cedula        String   @unique
+  telefono      String?
+  correo        String?
+  rol           String
+  compras       Compra[]
+  motosActuales Moto[]   @relation("ClienteActualMotos")
+  ventas        Venta[]
+}
+
+model Compra {
+  id        Int      @id @default(autoincrement())
+  motoId    Int
+  clienteId Int
+  precio    Float
+  fecha     DateTime @default(now())
+  cliente   Cliente  @relation(fields: [clienteId], references: [id])
+  moto      Moto     @relation(fields: [motoId], references: [id])
+}
+
+model Venta {
+  id             Int        @id @default(autoincrement())
+  motoId         Int
+  clienteId      Int
+  precio         Float
+  fecha          DateTime   @default(now())
+  formaPago      String
+  traspasoEstado String
+  comisiones     Comision[]
+  cliente        Cliente    @relation(fields: [clienteId], references: [id])
+  moto           Moto       @relation(fields: [motoId], references: [id])
+}
+
+model Gasto {
+  id          Int       @id @default(autoincrement())
+  descripcion String?
+  monto       Float
+  fecha       DateTime  @default(now())
+  motoId      Int?
+  comprobante String?
+  fechaPago   DateTime?
+  notas       String?
+  pagado      Boolean   @default(false)
+  tipo        TipoGasto
+  moto        Moto?     @relation(fields: [motoId], references: [id])
+}
+
+model Comision {
+  id        Int       @id @default(autoincrement())
+  monto     Float
+  fecha     DateTime  @default(now())
+  pagado    Boolean   @default(false)
+  fechaPago DateTime?
+  motoId    Int
+  ventaId   Int?
+  notas     String?
+  moto      Moto      @relation(fields: [motoId], references: [id])
+  venta     Venta?    @relation(fields: [ventaId], references: [id])
+}
+
 enum TipoGasto {
   ALQUILER
   MECANICO
@@ -17,92 +102,4 @@ enum TipoGasto {
   REPUESTOS
   MANTENIMIENTO
   OTROS
-}
-
-// Tipos de gastos que SIEMPRE deben estar asociados a una moto
-const gastosMotoObligatorios = [TipoGasto.MECANICO, TipoGasto.REPUESTOS, TipoGasto.COMISION, TipoGasto.TRASPASO, TipoGasto.MANTENIMIENTO]
-
-model Moto {
-  id              Int      @id @default(autoincrement())
-  marca           String
-  modelo          String
-  año             Int
-  kilometraje     Int
-  estado          String   // EN_EVALUACION, EN_REPARACION, DISPONIBLE, VENDIDA, RESERVADA
-  precioCompra    Float
-  precioVenta     Float?
-  fechaCompra     DateTime @default(now())
-  fechaVenta      DateTime?
-  descripcion     String?
-  fotos           String[] // URLs de las fotos
-  documentos      Json?    // { matricula?: string, soat?: string, revisionTecnica?: string }
-  reparaciones    Json?    // [{ descripcion: string, costo: float, fecha: datetime }]
-  clienteActualId Int?
-  clienteActual   Cliente? @relation("ClienteActualMotos", fields: [clienteActualId], references: [id])
-  compras         Compra[]
-  ventas          Venta[]
-  gastos          Gasto[]
-  comisiones      Comision[]
-}
-
-model Cliente {
-  id            Int       @id @default(autoincrement())
-  nombre        String
-  cedula        String    @unique
-  telefono      String?
-  correo        String?
-  rol           String
-  compras       Compra[]
-  ventas        Venta[]
-  motosActuales Moto[]    @relation("ClienteActualMotos")
-}
-
-model Compra {
-  id             Int      @id @default(autoincrement())
-  motoId         Int
-  clienteId      Int
-  precio         Float
-  fecha          DateTime @default(now())
-  moto           Moto     @relation(fields: [motoId], references: [id])
-  cliente        Cliente  @relation(fields: [clienteId], references: [id])
-}
-
-model Venta {
-  id             Int      @id @default(autoincrement())
-  motoId         Int
-  clienteId      Int
-  precio         Float
-  fecha          DateTime @default(now())
-  formaPago      String
-  traspasoEstado String   // pendiente, hecho
-  moto           Moto     @relation(fields: [motoId], references: [id])
-  cliente        Cliente  @relation(fields: [clienteId], references: [id])
-  comisiones     Comision[]
-}
-
-model Gasto {
-  id          Int       @id @default(autoincrement())
-  tipo        TipoGasto
-  descripcion String?
-  monto       Float
-  fecha       DateTime  @default(now())
-  motoId      Int?
-  moto        Moto?     @relation(fields: [motoId], references: [id])
-  comprobante String?   // URL o referencia al comprobante
-  pagado      Boolean   @default(false)
-  fechaPago   DateTime?
-  notas       String?
-}
-
-model Comision {
-  id        Int      @id @default(autoincrement())
-  monto     Float
-  fecha     DateTime @default(now())
-  pagado    Boolean  @default(false)
-  fechaPago DateTime?
-  motoId    Int
-  moto      Moto     @relation(fields: [motoId], references: [id])
-  ventaId   Int?
-  venta     Venta?   @relation(fields: [ventaId], references: [id])
-  notas     String?
 }
